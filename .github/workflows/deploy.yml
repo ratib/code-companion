@@ -6,25 +6,28 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 24
-      uses: actions/setup-java@v4
-      with:
-        java-version: '24'
-        distribution: 'temurin'
-    - name: Build with Gradle
-      uses: gradle/actions/setup-gradle@v3
-    - name: Build
-      run: gradle build
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Build and push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: your-docker-username/code-companion:latest
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: code-companion
+          path: ./app
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/code-companion:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/code-companion:${{ github.sha }}
